@@ -1,71 +1,71 @@
-# Placar Pro API
+# Placar Pro API 🚀
 
-Backend Node.js + Express + Prisma para o Placar Pro.
+Backend robusto construído com Node.js, Express e Prisma para gerenciamento de campeonatos esportivos.
 
-## Setup
+## 🛠️ Tecnologias
+- **Node.js** & **TypeScript**
+- **Express** (Framework Web)
+- **Prisma** (ORM)
+- **PostgreSQL** (Banco de Dados)
+- **JWT** (Autenticação)
+- **Google Auth** (Social Login)
+- **Sentry** (Monitoramento de Erros)
 
-### 1. Banco de dados
-Configure o PostgreSQL e atualize o `.env`:
+## ⚙️ Setup
+
+### 1. Variáveis de Ambiente
+Crie um arquivo `.env` na raiz do projeto:
 ```env
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/placar_pro?schema=public"
+DATABASE_URL="postgresql://usuario:senha@localhost:5432/placar_pro"
 PORT=3001
 CORS_ORIGIN="http://localhost:5173"
+JWT_SECRET="sua_chave_secreta_jwt"
+GOOGLE_CLIENT_ID="seu_google_client_id"
+SENTRY_DSN="sua_sentry_dsn"
 NODE_ENV="development"
 ```
 
-### 2. Instalar dependências
+### 2. Instalação e Execução
 ```bash
+# Instalar dependências
 npm install
-```
 
-### 3. Migration e Seed
-```bash
-npm run prisma:migrate   # cria as tabelas
-npm run prisma:seed      # popula dados iniciais (times + jogadores)
-```
+# Rodar migrations do Prisma
+npx prisma migrate dev
 
-### 4. Rodar em desenvolvimento
-```bash
+# Popular banco com dados iniciais (opcional)
+npm run prisma:seed
+
+# Iniciar em modo desenvolvimento
 npm run dev
 ```
 
-## Endpoints
+## 🔐 Autenticação e RBAC
+O sistema utiliza **Role-Based Access Control**:
+- `ADMIN`: Acesso total ao sistema e gestão de usuários.
+- `MANAGER`: Gerencia campeonatos e times, mas não gerencia usuários.
+- `USER`: Acesso apenas para visualização de resultados e tabelas.
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET    | /health | Health check |
-| **Championships** | | |
-| GET    | /championships | Lista todos |
-| POST   | /championships | Cria novo |
-| PATCH  | /championships/:id | Atualiza |
-| DELETE | /championships/:id | Remove |
-| POST   | /championships/:id/start | Inicia (mode: RANDOM\|MANUALLY) |
-| POST   | /championships/:id/finalize-start | Finaliza início |
-| POST   | /championships/:id/finish | Finaliza campeonato |
-| POST   | /championships/:id/reset-matches | Reseta partidas |
-| PUT    | /championships/:id/teams | Define times |
-| GET    | /championships/:id/standings | Classificação |
-| GET    | /championships/:id/top-scorers | Artilheiros |
-| POST   | /championships/:id/fill-random-results | Preenche resultados aleatórios |
-| GET    | /championships/:id/next-phase-preview | Preview próxima fase |
-| POST   | /championships/:id/next-phase | Gera próxima fase |
-| **Teams** | | |
-| GET    | /teams | Lista todos |
-| POST   | /teams | Cria time |
-| PATCH  | /teams/:id | Atualiza time |
-| DELETE | /teams/:id | Remove time |
-| POST   | /teams/:id/players | Adiciona jogador |
-| PATCH  | /teams/:id/players/:playerId | Atualiza jogador |
-| DELETE | /teams/:id/players/:playerId | Remove jogador |
-| **Groups** | | |
-| GET    | /groups?championshipId=... | Lista grupos |
-| POST   | /groups | Cria grupo |
-| PATCH  | /groups/:id | Atualiza grupo |
-| POST   | /groups/:id/generate-matches | Gera partidas do grupo |
-| POST   | /groups/championship/:id/reset | Reseta grupos |
-| POST   | /groups/championship/:id/auto-distribute | Distribui times automaticamente |
-| POST   | /groups/championship/:id/generate-all-matches | Gera todas partidas dos grupos |
-| **Matches** | | |
-| GET    | /matches?championshipId=... | Lista partidas |
-| POST   | /matches | Cria partida |
-| PATCH  | /matches/:id | Atualiza partida (score + gols) |
+## 📡 Endpoints Principais
+
+### Autenticação
+- `POST /auth/register`: Registro de novo usuário.
+- `POST /auth/login`: Login tradicional.
+- `POST /auth/google`: Login via Google OAuth.
+- `GET /auth/users`: (Admin) Lista todos os usuários.
+- `PATCH /auth/users/:userId/role`: (Admin) Altera permissão de um usuário.
+
+### Campeonatos
+- `GET /championships`: Lista campeonatos.
+- `POST /championships`: Cria novo torneio (Manager+).
+- `POST /championships/:id/start`: Inicia o torneio.
+- `POST /championships/:id/next-phase`: Gera chaves da próxima fase (Mata-mata).
+- `POST /championships/:id/fill-random-results`: (Admin) Gera placares automáticos.
+
+### Times e Jogadores
+- `GET /teams`: Lista todos os clubes.
+- `POST /teams`: Cadastro de time com suporte a logo em Base64.
+- `POST /teams/:id/players`: Cadastro de jogador com foto em Base64.
+
+---
+Desenvolvido com ❤️ para a comunidade esportiva.
