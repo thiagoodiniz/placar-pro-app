@@ -107,8 +107,8 @@ export async function updateUserRole(req: Request, res: Response) {
     const { role } = req.body
 
     const user = await prisma.user.update({
-        where: { id: userId },
-        data: { role }
+        where: { id: userId as string },
+        data: { role: role as any }
     })
     return res.json(user)
 }
