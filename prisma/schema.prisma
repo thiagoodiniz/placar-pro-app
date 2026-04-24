@@ -39,6 +39,25 @@ enum MatchBracket {
   SILVER
 }
 
+enum UserRole {
+  ADMIN
+  MANAGER
+  USER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String?
+  name      String
+  avatarUrl String?  @db.Text
+  role      UserRole @default(USER)
+  googleId  String?  @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Championship {
   id             String             @id @default(uuid())
   name           String

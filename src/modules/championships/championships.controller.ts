@@ -173,6 +173,15 @@ export async function updateChampionship(req: Request, res: Response) {
 
 export async function deleteChampionship(req: Request, res: Response) {
     const id = String(req.params.id)
+    const userRole = (req as any).userRole
+
+    const champ = await prisma.championship.findUnique({ where: { id } })
+    if (!champ) return res.status(404).json({ error: 'Championship not found' })
+
+    if (champ.status === 'FINISHED' && userRole !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can delete finished championships' })
+    }
+
     await prisma.championship.delete({ where: { id } })
     cacheManager.del(['championships:list', `championships:detail:${id}`, `championships:standings:${id}`, `championships:scorers:${id}`, `matches:list:${id}`])
     return res.json({ message: 'Championship deleted' })

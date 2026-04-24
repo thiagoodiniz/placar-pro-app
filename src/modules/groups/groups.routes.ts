@@ -9,13 +9,17 @@ import {
     generateAllGroupMatches,
 } from './groups.controller'
 
+import { authMiddleware, roleMiddleware } from '../../middlewares/auth'
+
 export const groupsRouter = Router()
 
-groupsRouter.get('/', listGroups)
-groupsRouter.post('/', createGroup)
-groupsRouter.patch('/:id', updateGroup)
+const writeRoles = ['ADMIN', 'MANAGER']
 
-groupsRouter.post('/:id/generate-matches', generateMatchesForGroup)
-groupsRouter.post('/championship/:championshipId/reset', resetGroups)
-groupsRouter.post('/championship/:championshipId/auto-distribute', autoDistributeTeams)
-groupsRouter.post('/championship/:championshipId/generate-all-matches', generateAllGroupMatches)
+groupsRouter.get('/', listGroups)
+groupsRouter.post('/', authMiddleware, roleMiddleware(writeRoles), createGroup)
+groupsRouter.patch('/:id', authMiddleware, roleMiddleware(writeRoles), updateGroup)
+
+groupsRouter.post('/:id/generate-matches', authMiddleware, roleMiddleware(writeRoles), generateMatchesForGroup)
+groupsRouter.post('/championship/:championshipId/reset', authMiddleware, roleMiddleware(writeRoles), resetGroups)
+groupsRouter.post('/championship/:championshipId/auto-distribute', authMiddleware, roleMiddleware(writeRoles), autoDistributeTeams)
+groupsRouter.post('/championship/:championshipId/generate-all-matches', authMiddleware, roleMiddleware(writeRoles), generateAllGroupMatches)

@@ -3,6 +3,7 @@ import { championshipsRouter } from './modules/championships/championships.route
 import { teamsRouter } from './modules/teams/teams.routes'
 import { groupsRouter } from './modules/groups/groups.routes'
 import { matchesRouter } from './modules/matches/matches.routes'
+import { authRoutes } from './modules/auth/auth.routes'
 import { addTeamsToChampionship } from './modules/championships/championships.controller'
 import { 
     createGroup,
@@ -25,6 +26,7 @@ routes.use('/championships', championshipsRouter)
 routes.use('/teams', teamsRouter)
 routes.use('/groups', groupsRouter)
 routes.use('/matches', matchesRouter)
+routes.use('/auth', authRoutes)
 
 // ─── Legacy / Frontend Compatibility Routes ──────────────────────────────────
 
