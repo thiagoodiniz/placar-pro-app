@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ChampionshipStatus {
+  DRAFT
+  STARTED
+  FINISHED
+}
+
+enum ChampionshipFormat {
+  KNOCKOUT
+  GROUPS_KNOCKOUT
+  LEAGUE
+}
+
+enum MatchMode {
+  RANDOM
+  MANUALLY
+}
+
+enum KnockoutMode {
+  RANDOM
+  RANKED
+}
+
+enum MatchStatus {
+  SCHEDULED
+  FINISHED
+}
+
+enum MatchBracket {
+  GOLD
+  SILVER
+}
+
+model Championship {
+  id             String             @id @default(uuid())
+  name           String
+  format         ChampionshipFormat
+  teamCount      Int
+  groupCount     Int?
+  advancingCount Int?
+  roundTrip      Boolean            @default(false)
+  status         ChampionshipStatus @default(DRAFT)
+  matchMode      MatchMode?
+  knockoutMode   KnockoutMode?
+  champion       String?
+  silverChampion String?
+
+  teams  ChampionshipTeam[]
+  groups Group[]
+  matches Match[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Team {
+  id             String  @id @default(uuid())
+  name           String
+  logoUrl        String? @db.Text
+  primaryColor   String?
+  secondaryColor String?
+
+  players Player[]
+
+  championships ChampionshipTeam[]
+
+  homeMatches Match[] @relation("HomeTeam")
+  awayMatches Match[] @relation("AwayTeam")
+
+  groupTeams GroupTeam[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Player {
+  id       String  @id @default(uuid())
+  teamId   String
+  name     String
+  photoUrl String? @db.Text
+
+  team  Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  goals Goal[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([teamId])
+}
+
+model ChampionshipTeam {
+  id             String @id @default(uuid())
+  championshipId String
+  teamId         String
+
+  championship Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  team         Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([championshipId, teamId])
+  @@index([championshipId])
+  @@index([teamId])
+}
+
+model Group {
+  id             String @id @default(uuid())
+  championshipId String
+  name           String
+
+  championship Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  teams        GroupTeam[]
+  matches      Match[]
+
+  @@index([championshipId])
+}
+
+model GroupTeam {
+  id      String @id @default(uuid())
+  groupId String
+  teamId  String
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  team  Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, teamId])
+  @@index([groupId])
+  @@index([teamId])
+}
+
+model Match {
+  id             String       @id @default(uuid())
+  championshipId String
+  groupId        String?
+  homeTeamId     String
+  awayTeamId     String
+  homeScore      Int?
+  awayScore      Int?
+  homePenalties  Int?
+  awayPenalties  Int?
+  status         MatchStatus  @default(SCHEDULED)
+  phase          String
+  bracket        MatchBracket?
+  round          Int          @default(1)
+  location       String?
+  dateTime       DateTime?
+
+  championship Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  group        Group?       @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  homeTeam     Team         @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam     Team         @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  goals        Goal[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([championshipId])
+  @@index([groupId])
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+}
+
+model Goal {
+  id         String @id @default(uuid())
+  matchId    String
+  playerId   String
+  teamId     String
+  playerName String
+  teamName   String
+
+  match  Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([matchId])
+  @@index([playerId])
+}
