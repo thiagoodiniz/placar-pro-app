@@ -2,21 +2,12 @@ import express from 'express'
 import cors from 'cors'
 import 'dotenv/config'
 import * as Sentry from "@sentry/node"
-import { nodeProfilingIntegration } from "@sentry/profiling-node"
 import { routes } from './routes'
 import { errorMiddleware } from './middlewares/error'
 
 export const app = express()
 
-Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    integrations: [
-        nodeProfilingIntegration(),
-    ],
-    tracesSampleRate: 1.0,
-    profilesSampleRate: 1.0,
-    sendDefaultPii: true,
-});
+
 
 const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || []
 
