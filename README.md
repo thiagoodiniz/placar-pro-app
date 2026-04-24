@@ -13,19 +13,7 @@ Backend robusto construído com Node.js, Express e Prisma para gerenciamento de 
 
 ## ⚙️ Setup
 
-### 1. Variáveis de Ambiente
-Crie um arquivo `.env` na raiz do projeto:
-```env
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/placar_pro"
-PORT=3001
-CORS_ORIGIN="http://localhost:5173"
-JWT_SECRET="sua_chave_secreta_jwt"
-GOOGLE_CLIENT_ID="seu_google_client_id"
-SENTRY_DSN="sua_sentry_dsn"
-NODE_ENV="development"
-```
-
-### 2. Instalação e Execução
+### 1. Instalação e Execução
 ```bash
 # Instalar dependências
 npm install
@@ -67,5 +55,3 @@ O sistema utiliza **Role-Based Access Control**:
 - `POST /teams`: Cadastro de time com suporte a logo em Base64.
 - `POST /teams/:id/players`: Cadastro de jogador com foto em Base64.
 
----
-Desenvolvido com ❤️ para a comunidade esportiva.
