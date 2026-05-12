@@ -17,8 +17,10 @@ export async function listMatches(req: Request, res: Response) {
             goals: true,
         },
         orderBy: [
+            { round: 'asc' },
             { dateTime: { sort: 'asc', nulls: 'last' } as any },
-            { createdAt: 'asc' }
+            { createdAt: 'asc' },
+            { id: 'asc' }
         ],
     })
 
