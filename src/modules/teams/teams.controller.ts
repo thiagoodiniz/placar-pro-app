@@ -145,7 +145,25 @@ export async function updateTeam(req: Request, res: Response) {
         data: { name, logoUrl, primaryColor, secondaryColor },
         include: { players: true },
     })
-    cacheManager.del(['teams:list', `teams:detail:${id}`])
+
+    // Invalidate team caches
+    const keysToDel = ['teams:list', `teams:detail:${id}`, `teams:matches:${id}`]
+
+    // Find championships this team belongs to and invalidate them
+    const championships = await prisma.championshipTeam.findMany({
+        where: { teamId: id },
+        select: { championshipId: true }
+    })
+
+    keysToDel.push('championships:list')
+    championships.forEach(c => {
+        keysToDel.push(`championships:detail:${c.championshipId}`)
+        keysToDel.push(`championships:standings:${c.championshipId}`)
+        keysToDel.push(`championships:scorers:${c.championshipId}`)
+        keysToDel.push(`matches:list:${c.championshipId}`)
+    })
+
+    cacheManager.del(keysToDel)
     return res.json(team)
 }
 
@@ -164,7 +182,25 @@ export async function deleteTeam(req: Request, res: Response) {
     }
 
     await prisma.team.delete({ where: { id } })
-    cacheManager.del(['teams:list', `teams:detail:${id}`])
+
+    // Invalidate team caches
+    const keysToDel = ['teams:list', `teams:detail:${id}`, `teams:matches:${id}`]
+
+    // Find championships this team belonged to and invalidate them
+    const championships = await prisma.championshipTeam.findMany({
+        where: { teamId: id },
+        select: { championshipId: true }
+    })
+
+    keysToDel.push('championships:list')
+    championships.forEach(c => {
+        keysToDel.push(`championships:detail:${c.championshipId}`)
+        keysToDel.push(`championships:standings:${c.championshipId}`)
+        keysToDel.push(`championships:scorers:${c.championshipId}`)
+        keysToDel.push(`matches:list:${c.championshipId}`)
+    })
+
+    cacheManager.del(keysToDel)
     return res.json({ message: 'Team deleted' })
 }
 
@@ -185,7 +221,19 @@ export async function updatePlayer(req: Request, res: Response) {
         where: { id: playerId },
         data: { name, ...(photoUrl !== undefined && { photoUrl }) },
     })
-    cacheManager.del([`teams:detail:${player.teamId}`, 'teams:list'])
+
+    const keysToDel = [`teams:detail:${player.teamId}`, 'teams:list']
+
+    // If player data changed, we might need to invalidate scorers in championships
+    const championships = await prisma.championshipTeam.findMany({
+        where: { teamId: player.teamId },
+        select: { championshipId: true }
+    })
+    championships.forEach(c => {
+        keysToDel.push(`championships:scorers:${c.championshipId}`)
+    })
+
+    cacheManager.del(keysToDel)
     return res.json(player)
 }
 
@@ -194,7 +242,19 @@ export async function removePlayer(req: Request, res: Response) {
     const player = await prisma.player.findUnique({ where: { id: playerId } })
     if (player) {
         await prisma.player.delete({ where: { id: playerId } })
-        cacheManager.del([`teams:detail:${player.teamId}`, 'teams:list'])
+
+        const keysToDel = [`teams:detail:${player.teamId}`, 'teams:list']
+
+        // Invalidate scorers in championships
+        const championships = await prisma.championshipTeam.findMany({
+            where: { teamId: player.teamId },
+            select: { championshipId: true }
+        })
+        championships.forEach(c => {
+            keysToDel.push(`championships:scorers:${c.championshipId}`)
+        })
+
+        cacheManager.del(keysToDel)
     }
     return res.json({ message: 'Player removed' })
 }

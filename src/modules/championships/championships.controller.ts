@@ -59,7 +59,7 @@ async function computeStandingsForChampionship(championshipId: string) {
         const standings = champ.teams.map(ct => {
             const team = ct.team
             const tMatches = finishedMatches.filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id)
-            const stats = buildStats(team.id, team.name, team.logoUrl, tMatches)
+            const stats = buildStats(team.id, team.name, team.logoUrl, team.primaryColor, team.secondaryColor, tMatches)
             return stats
         })
         return [{ groupId: 'geral', groupName: 'Geral', standings: standings.sort(sortStandings) }]
@@ -70,7 +70,7 @@ async function computeStandingsForChampionship(championshipId: string) {
         const standings = group.teams.map(gt => {
             const team = gt.team
             const tMatches = groupMatches.filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id)
-            return buildStats(team.id, team.name, team.logoUrl, tMatches)
+            return buildStats(team.id, team.name, team.logoUrl, team.primaryColor, team.secondaryColor, tMatches)
         })
         return { groupId: group.id, groupName: group.name, standings: standings.sort(sortStandings) }
     })
@@ -78,6 +78,7 @@ async function computeStandingsForChampionship(championshipId: string) {
 
 function buildStats(
     teamId: string, teamName: string, teamLogoUrl: string | null,
+    primaryColor: string | null, secondaryColor: string | null,
     matches: { homeTeamId: string; awayTeamId: string; homeScore: number | null; awayScore: number | null }[]
 ) {
     let wins = 0, draws = 0, losses = 0, goalsFor = 0, goalsAgainst = 0, points = 0
@@ -90,7 +91,7 @@ function buildStats(
         else if (own === opp) { draws++; points += 1 }
         else losses++
     }
-    return { teamId, teamName, teamLogoUrl, played: matches.length, wins, draws, losses, goalsFor, goalsAgainst, gd: goalsFor - goalsAgainst, points }
+    return { teamId, teamName, teamLogoUrl, primaryColor, secondaryColor, played: matches.length, wins, draws, losses, goalsFor, goalsAgainst, gd: goalsFor - goalsAgainst, points }
 }
 
 function sortStandings(a: { points: number; gd: number; goalsFor: number }, b: { points: number; gd: number; goalsFor: number }) {
@@ -184,6 +185,8 @@ export async function deleteChampionship(req: Request, res: Response) {
 
     await prisma.championship.delete({ where: { id } })
     cacheManager.del(['championships:list', `championships:detail:${id}`, `championships:standings:${id}`, `championships:scorers:${id}`, `matches:list:${id}`])
+    cacheManager.delByPrefix('teams:detail:')
+    cacheManager.del('teams:list')
     return res.json({ message: 'Championship deleted' })
 }
 
@@ -326,7 +329,12 @@ export async function getTopScorers(req: Request, res: Response) {
         include: { player: { include: { team: true } } },
     })
 
-    const scores: Record<string, { playerId: string; player: string; photoUrl: string | null; teamId: string; team: string; teamLogoUrl: string | null; goals: number }> = {}
+    const scores: Record<string, { 
+        playerId: string; player: string; photoUrl: string | null; 
+        teamId: string; team: string; teamLogoUrl: string | null; 
+        teamPrimaryColor: string | null; teamSecondaryColor: string | null;
+        goals: number 
+    }> = {}
     for (const g of goals) {
         if (!scores[g.playerId]) {
             scores[g.playerId] = {
@@ -336,6 +344,8 @@ export async function getTopScorers(req: Request, res: Response) {
                 teamId: g.teamId,
                 team: g.teamName,
                 teamLogoUrl: g.player.team.logoUrl,
+                teamPrimaryColor: g.player.team.primaryColor,
+                teamSecondaryColor: g.player.team.secondaryColor,
                 goals: 0,
             }
         }

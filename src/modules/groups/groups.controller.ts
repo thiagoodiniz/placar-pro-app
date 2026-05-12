@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import { prisma } from '../../lib/prisma'
+import { cacheManager } from '../../lib/cache'
 
 export async function listGroups(req: Request, res: Response) {
     const championshipId = req.query.championshipId ? String(req.query.championshipId) : undefined
@@ -20,6 +21,7 @@ export async function createGroup(req: Request, res: Response) {
         },
         include: { teams: { include: { team: true } } },
     })
+    cacheManager.del([`championships:detail:${championshipId}`, `championships:standings:${championshipId}`])
     return res.status(201).json(group)
 }
 
@@ -39,6 +41,7 @@ export async function updateGroup(req: Request, res: Response) {
         data: { ...(name && { name }) },
         include: { teams: { include: { team: true } } },
     })
+    cacheManager.del([`championships:detail:${group.championshipId}`, `championships:standings:${group.championshipId}`])
     return res.json(group)
 }
 
@@ -50,6 +53,7 @@ export async function resetGroups(req: Request, res: Response) {
         await prisma.groupTeam.deleteMany({ where: { groupId: g.id } })
     }
     await prisma.championship.update({ where: { id: championshipId }, data: { matchMode: null } })
+    cacheManager.del([`championships:detail:${championshipId}`, `championships:standings:${championshipId}`, `matches:list:${championshipId}`])
     return res.json({ message: 'Groups and matches reset' })
 }
 
@@ -70,6 +74,7 @@ export async function autoDistributeTeams(req: Request, res: Response) {
     const data = teamIds.map((teamId, i) => ({ groupId: groups[i % groups.length].id, teamId }))
     await prisma.groupTeam.createMany({ data })
 
+    cacheManager.del([`championships:detail:${championshipId}`, `championships:standings:${championshipId}`])
     return res.json({ message: 'Teams distributed' })
 }
 
@@ -97,6 +102,7 @@ export async function generateMatchesForGroup(req: Request, res: Response) {
         arr.splice(1, 0, arr.pop()!)
     }
     await prisma.match.createMany({ data: matchData })
+    cacheManager.del([`matches:list:${group.championshipId}`, `championships:detail:${group.championshipId}`])
     return res.json({ message: 'Matches generated' })
 }
 
@@ -125,5 +131,6 @@ export async function generateAllGroupMatches(req: Request, res: Response) {
         }
         await prisma.match.createMany({ data: matchData })
     }
+    cacheManager.del([`matches:list:${championshipId}`, `championships:detail:${championshipId}`])
     return res.json({ message: 'All group matches generated' })
 }
