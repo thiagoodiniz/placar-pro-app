@@ -179,8 +179,8 @@ export async function deleteChampionship(req: Request, res: Response) {
     const champ = await prisma.championship.findUnique({ where: { id } })
     if (!champ) return res.status(404).json({ error: 'Championship not found' })
 
-    if (champ.status === 'FINISHED' && userRole !== 'ADMIN') {
-        return res.status(403).json({ error: 'Only admins can delete finished championships' })
+    if (userRole !== 'ADMIN' && (userRole !== 'MANAGER' || champ.status !== 'DRAFT')) {
+        return res.status(403).json({ error: 'Apenas administradores podem excluir campeonatos em andamento ou finalizados.' })
     }
 
     await prisma.championship.delete({ where: { id } })
